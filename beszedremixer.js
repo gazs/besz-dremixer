@@ -118,26 +118,25 @@ $(document).ready(function() {
       return this.render();
     };
     VideoBox.prototype.render = function() {
-      var v;
       $(this.el).html(this.template(this.model.toJSON()));
-      v = $('video', this.el).get(0);
-      v.addEventListener('timeupdate', __bind(function() {
-        return $('#currenttime').html(sec2smpte(v.currentTime, this.model.get("fps")) + '/' + sec2smpte(v.duration, this.model.get("fps")));
+      this.v = $('video', this.el).get(0);
+      this.v.addEventListener('timeupdate', __bind(function() {
+        return $('#currenttime').html(sec2smpte(this.v.currentTime, this.model.get("fps")) + '/' + sec2smpte(this.v.duration, this.model.get("fps")));
       }, this), true);
       return this;
     };
     VideoBox.prototype.rewind = function() {
-      return v.currentTime = 0;
+      return this.v.currentTime = 0;
     };
     VideoBox.prototype.playpause = function() {
-      if (v.paused) {
-        return v.play();
+      if (this.v.paused) {
+        return this.v.play();
       } else {
-        return v.pause();
+        return this.v.pause();
       }
     };
     VideoBox.prototype.back2s = function() {
-      return v.currentTime -= 4;
+      return this.v.currentTime -= 4;
     };
     return VideoBox;
   })();

@@ -80,17 +80,17 @@ $(document).ready ->
       @render()
     render: ->
       $(@el).html(@template(@model.toJSON()))
-      v = $('video', @el).get(0)
-      v.addEventListener 'timeupdate', =>
-        $('#currenttime').html sec2smpte(v.currentTime, @model.get("fps")) + '/' + sec2smpte(v.duration, @model.get("fps"))
+      @v = $('video', @el).get(0)
+      @v.addEventListener 'timeupdate', =>
+        $('#currenttime').html sec2smpte(@v.currentTime, @model.get("fps")) + '/' + sec2smpte(@v.duration, @model.get("fps"))
       , true
       @
     rewind: ->
-      v.currentTime=0
+      @v.currentTime=0
     playpause: ->
-      if v.paused then v.play() else v.pause()
+      if @v.paused then @v.play() else @v.pause()
     back2s: ->
-      v.currentTime-=4
+      @v.currentTime-=4
       
 
   class TranscriptionBox extends Backbone.View
