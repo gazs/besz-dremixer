@@ -45,10 +45,14 @@
     <button>Foo</button>
   </div>
   <div id="refine" class="sheet">
-    <input type="number" min="00" max="25" size=1>:
-    <input type="number" min="00" max="25" size=1>:
-    <input type="number" min="00" max="25" size=1>:
-    <input type="number" min="00" max="25" size=1>
+    <script type="text/template" id="refinetemplate">
+    <div class="phrase">
+      <%= text %>
+      <input type="text" value="<% try { start } catch(e) { start="00:00:00:00"  }%><%= start %>">
+      <input type="text" value="<% try { end } catch(e) { end="00:00:00:00"  }%><%= end %>">
+      <button>▶</button> 
+    </div>
+    </script>
   </div>
   </div>
   </body>

@@ -109,6 +109,11 @@ $(document).ready(function() {
     __extends(VideoBox, Backbone.View);
     VideoBox.prototype.tagName = 'video';
     VideoBox.prototype.template = _.template($('#vidtemplate').html());
+    VideoBox.prototype.events = {
+      'click #rewind': 'rewind',
+      'click #playpause': 'playpause',
+      'click #back2s': 'back2s'
+    };
     VideoBox.prototype.initialize = function() {
       return this.render();
     };
@@ -116,23 +121,23 @@ $(document).ready(function() {
       var v;
       $(this.el).html(this.template(this.model.toJSON()));
       v = $('video', this.el).get(0);
-      $('#rewind', this.el).bind('click', function() {
-        return v.currentTime = 0;
-      });
-      $('#playpause', this.el).bind('click', function() {
-        if (v.paused) {
-          return v.play();
-        } else {
-          return v.pause();
-        }
-      });
-      $('#back2s', this.el).bind('click', function() {
-        return v.currentTime -= 4;
-      });
       v.addEventListener('timeupdate', __bind(function() {
         return $('#currenttime').html(sec2smpte(v.currentTime, this.model.get("fps")) + '/' + sec2smpte(v.duration, this.model.get("fps")));
       }, this), true);
       return this;
+    };
+    VideoBox.prototype.rewind = function() {
+      return v.currentTime = 0;
+    };
+    VideoBox.prototype.playpause = function() {
+      if (v.paused) {
+        return v.play();
+      } else {
+        return v.pause();
+      }
+    };
+    VideoBox.prototype.back2s = function() {
+      return v.currentTime -= 4;
     };
     return VideoBox;
   })();
@@ -144,11 +149,16 @@ $(document).ready(function() {
     TranscriptionBox.prototype.initialize = function() {
       return this.render();
     };
+    TranscriptionBox.prototype.events = function() {
+      return {
+        'click button': 'saveTranscription'
+      };
+    };
     TranscriptionBox.prototype.render = function() {
-      $('textarea', this.el).html(this.model.get('transcription'));
-      return $('button', this.el).bind('click', __bind(function() {
-        return this.model.saveTranscription($('textarea', this.el).html());
-      }, this));
+      return $('textarea', this.el).html(this.model.get('transcription'));
+    };
+    TranscriptionBox.prototype.saveTranscription = function() {
+      return this.model.saveTranscription($('textarea', this.el).html());
     };
     return TranscriptionBox;
   })();
@@ -164,6 +174,28 @@ $(document).ready(function() {
       return this.model.getNextPhrase();
     };
     return TagBox;
+  })();
+  window.RefinePhrase = (function() {
+    function RefinePhrase() {
+      RefinePhrase.__super__.constructor.apply(this, arguments);
+    }
+    __extends(RefinePhrase, Backbone.View);
+    RefinePhrase.prototype.template = _.template($('#refinetemplate').html());
+    RefinePhrase.prototype.events = {
+      'click button': 'play',
+      'keyup input': 'save'
+    };
+    RefinePhrase.prototype.initialize = function() {};
+    RefinePhrase.prototype.render = function() {
+      return $(this.el).html(this.template(this.model.toJSON()));
+    };
+    RefinePhrase.prototype.save = function() {
+      return console.log('save');
+    };
+    RefinePhrase.prototype.play = function() {
+      return console.log('play');
+    };
+    return RefinePhrase;
   })();
   Workspace = (function() {
     function Workspace() {

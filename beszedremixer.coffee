@@ -72,30 +72,36 @@ $(document).ready ->
   class VideoBox extends Backbone.View
     tagName: 'video'
     template: _.template($('#vidtemplate').html())
+    events:
+      'click #rewind': 'rewind'
+      'click #playpause': 'playpause'
+      'click #back2s': 'back2s'
     initialize: ->
       @render()
     render: ->
       $(@el).html(@template(@model.toJSON()))
       v = $('video', @el).get(0)
-      $('#rewind', @el).bind 'click', ->
-        v.currentTime=0
-      $('#playpause', @el).bind 'click', ->
-        if v.paused then v.play() else v.pause()
-      $('#back2s', @el).bind 'click', ->
-        v.currentTime-=4
       v.addEventListener 'timeupdate', =>
         $('#currenttime').html sec2smpte(v.currentTime, @model.get("fps")) + '/' + sec2smpte(v.duration, @model.get("fps"))
       , true
       @
+    rewind: ->
+      v.currentTime=0
+    playpause: ->
+      if v.paused then v.play() else v.pause()
+    back2s: ->
+      v.currentTime-=4
       
 
   class TranscriptionBox extends Backbone.View
     initialize: ->
       @render()
+    events: ->
+      'click button' : 'saveTranscription'
     render: ->
       $('textarea', @el).html  @model.get 'transcription'
-      $('button', @el).bind 'click', =>
-        @model.saveTranscription $('textarea', @el).html()
+    saveTranscription: ->
+      @model.saveTranscription $('textarea', @el).html()
 
   class TagBox extends Backbone.View
     initialize: ->
@@ -103,6 +109,20 @@ $(document).ready ->
     render: ->
       @model.getNextPhrase()
 
+
+  class window.RefinePhrase extends Backbone.View
+    template: _.template($('#refinetemplate').html())
+    events:
+      'click button': 'play'
+      'keyup input': 'save'
+
+    initialize: ->
+    render: ->
+      $(@el).html @template @model.toJSON()
+    save: ->
+      console.log 'save'
+    play: ->
+      console.log 'play'
 
 
   class Workspace extends Backbone.Controller
