@@ -65,7 +65,7 @@ Speech = (function() {
   return Speech;
 })();
 $(document).ready(function() {
-  var TranscriptionBox, Vid, VideoBox, Workspace;
+  var TagBox, TranscriptionBox, Vid, VideoBox, Workspace;
   Vid = (function() {
     function Vid() {
       Vid.__super__.constructor.apply(this, arguments);
@@ -88,6 +88,16 @@ $(document).ready(function() {
       })();
       return this.set({
         speech: new Speech(phrases)
+      });
+    };
+    Vid.prototype.getLastPhrase = function() {
+      return this.get('speech').chain().select(function(phrase) {
+        return typeof phrase.get('start') === 'string';
+      }).last().value();
+    };
+    Vid.prototype.getNextPhrase = function() {
+      return this.get('speech').detect(function(phrase) {
+        return typeof phrase.get('start') === 'undefined';
       });
     };
     return Vid;
@@ -141,6 +151,19 @@ $(document).ready(function() {
       }, this));
     };
     return TranscriptionBox;
+  })();
+  TagBox = (function() {
+    function TagBox() {
+      TagBox.__super__.constructor.apply(this, arguments);
+    }
+    __extends(TagBox, Backbone.View);
+    TagBox.prototype.initialize = function() {
+      return this.render();
+    };
+    TagBox.prototype.render = function() {
+      return this.model.getNextPhrase();
+    };
+    return TagBox;
   })();
   Workspace = (function() {
     function Workspace() {

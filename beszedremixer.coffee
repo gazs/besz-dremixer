@@ -60,6 +60,13 @@ $(document).ready ->
       phrases = (new Phrase({text: phrase}) for phrase in arr)
       @set
         speech: new Speech(phrases)
+    getLastPhrase: ->
+      @get('speech').chain().select (phrase)->
+        typeof phrase.get('start') is 'string'
+      .last().value()
+    getNextPhrase: ->
+      @get('speech').detect (phrase)->
+        typeof phrase.get('start') is 'undefined'
 
 
   class VideoBox extends Backbone.View
@@ -89,6 +96,12 @@ $(document).ready ->
       $('textarea', @el).html  @model.get 'transcription'
       $('button', @el).bind 'click', =>
         @model.saveTranscription $('textarea', @el).html()
+
+  class TagBox extends Backbone.View
+    initialize: ->
+      @render()
+    render: ->
+      @model.getNextPhrase()
 
 
 
