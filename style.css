@@ -1,0 +1,64 @@
+@font-face {
+  font-family: "Gill Sans";
+  src:  url("GillSansMTPro-Medium.otf");
+  font-style: normal;
+}
+
+body {
+  background: #1a1a1a;
+  color: #dfdfdf;
+  font-family: 'Gill Sans', sans;
+}
+h1, h2, h3, h4, h5 {
+    text-transform: uppercase;
+    padding:10px;
+}
+
+a {
+  text-decoration:none;
+  color: #9fb02c;
+  text-transform: uppercase;
+}
+a:hover {
+  border-bottom: 1px dotted #9fb02c;
+}
+input, button, textarea {
+  border-radius: 5px;
+  border: 1px solid #666;
+  padding:7px;
+}
+button {
+  background: #010101;
+  padding-bottom: 0px;
+  color: #666;
+  text-transform: uppercase;
+  font-family: 'Gill Sans'
+}
+button:active {
+  background:#9fb02c;
+  color: #1a1a1a;
+}
+ul {
+  padding-bottom:10px;
+}
+li {
+  display:inline
+}
+li a.active {
+  color:#fff;
+}
+
+.sheet {
+  display:none;
+}
+
+#tag {
+  text-align:center;
+}
+#tag p {
+}
+#tag button {
+  font-size:150%;
+
+
+}

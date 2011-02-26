@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8">
+    <title>beszédremixer poc</title>
+    <script src="zepto.min.js"></script>
+    <script src="underscore-min.js"></script>
+    <script src="backbone-min.js"></script>
+    <script src="beszedremixer.js"></script>
+    <link rel="stylesheet" href="reset.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="960.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="style.css" type="text/css" media="screen" charset="utf-8">
+    <style>
+    </style>
+  </head>
+  <body>
+    <div class="container_12">
+      <div class="grid_12">
+        <h1>beszédremixer PoC</h1>
+
+  </div>
+  
+  <div class="grid_6" id="vid">
+    <script type=text/template" id="vidtemplate">
+      <video style="width:100%" class="" src="<%= url %>"></video>
+    <button id="rewind">⇤ legelejére</button><button id="playpause">▶ playpause</button><button id="back2s">↶ vissza kicsit</button>
+    <span id="currenttime"></span>
+  </script>
+  </div>
+  <div class="grid_6">
+    <ul>
+      <li><a href="#transcribe" class="active">Szövegbevitel</a></li>
+      <li><a href="#tag">címkézés</a></li>
+      <li><a href="#refine">pontosítás</a></li>
+      <li></li>
+    </ul>
+  <div id="transcribe" class="sheet">
+    <textarea style="width:100%" rows=12 id='transcriptionbox'>
+    </textarea>
+    <button>mentés</button>
+  </div>
+  </div>
+  <div id="tag" class="sheet">
+    <p>kattints a szóra, amikor elhangzik <i>(ne aggódj, ha nem pontos, lesz lehetőséged korrigálásra)</i></p>
+    <button>Foo</button>
+  </div>
+  <div id="refine" class="sheet">
+    <input type="number" min="00" max="25" size=1>:
+    <input type="number" min="00" max="25" size=1>:
+    <input type="number" min="00" max="25" size=1>:
+    <input type="number" min="00" max="25" size=1>
+  </div>
+  </div>
+  </body>
+</html>
