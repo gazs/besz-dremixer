@@ -53,7 +53,7 @@ $(document).ready ->
       @set
         speech: new Speech(phrases)
     getLastPhrase: =>
-      @get('speech').chain().select (phrase)->
+      last = @get('speech').chain().select (phrase)->
         typeof phrase.get('start') is 'string'
       .last().value()
     getNextPhrase: =>
@@ -96,18 +96,13 @@ $(document).ready ->
     saveTranscription: =>
       @model.saveTranscription $('textarea', @el).html()
 
-  class TagBox extends Backbone.View
-    initialize: =>
-      @render()
-    render: =>
-      @model.getNextPhrase()
 
 
   class RefinePhrase extends Backbone.View
     template: _.template($('#refinetemplate').html())
     events:
       'click button': 'play'
-      'keyup input': 'save'
+      'change input': 'save'
 
     initialize: =>
       @model.bind 'change', @render
@@ -116,12 +111,36 @@ $(document).ready ->
       $(@el).html @template @model.toJSON()
       @
     save: =>
+      console.log 'save'
       @model.set
         start:$('input', @el).get(0).value
         end:$('input', @el).get(1).value
     play: =>
       @model.play()
 
+  class TaggerButton extends Backbone.View
+    initialize: =>
+      @model.bind 'all', @render
+      @video = @model.player.v
+    events:
+      'click': 'next'
+    next: ->
+      unless @video.paused or @video.ended
+        currentTime = @video.currentTime
+        console.log currentTime
+        console.log @model.getLastPhrase()
+        try
+          @model.getLastPhrase().set
+            end: sec2smpte(currentTime, @model.get('fps'))
+        @model.getNextPhrase().set
+          start: sec2smpte(currentTime, @model.get('fps'))
+        @render()
+      else
+        @video.currentTime = 0
+        @video.play()
+    el: $('#taggerbutton')
+    render: =>
+      @el.html @model.getNextPhrase().get('text')
 
   class RefinerView extends Backbone.View
     initialize: =>
@@ -133,6 +152,7 @@ $(document).ready ->
       view.render()
       @el.append view.render().el
     render: =>
+      @el.html ""
       @model.get('speech').each @addOne
 
   class Workspace extends Backbone.Controller
@@ -160,6 +180,8 @@ $(document).ready ->
     model: v
   window.refinerview = new RefinerView
     el: $('#refine')
+    model: v
+  window.taggerbutton = new TaggerButton
     model: v
 
   new Workspace()

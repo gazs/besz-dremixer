@@ -32,7 +32,7 @@ sec2smpte = function(time, fps) {
   return [padZero(Math.floor(time / 3600) % 24), padZero(Math.floor(time / 60) % 60), padZero(Math.floor(time % 60)), padZero(Math.floor(((time % 1) * fps).toFixed(3)))].join(":");
 };
 $(document).ready(function() {
-  var Phrase, RefinePhrase, RefinerView, Speech, TagBox, TranscriptionBox, Vid, VideoBox, Workspace;
+  var Phrase, RefinePhrase, RefinerView, Speech, TaggerButton, TranscriptionBox, Vid, VideoBox, Workspace;
   Phrase = (function() {
     function Phrase() {
       this.play = __bind(this.play, this);;
@@ -100,7 +100,8 @@ $(document).ready(function() {
       });
     };
     Vid.prototype.getLastPhrase = function() {
-      return this.get('speech').chain().select(function(phrase) {
+      var last;
+      return last = this.get('speech').chain().select(function(phrase) {
         return typeof phrase.get('start') === 'string';
       }).last().value();
     };
@@ -175,20 +176,6 @@ $(document).ready(function() {
     };
     return TranscriptionBox;
   })();
-  TagBox = (function() {
-    function TagBox() {
-      this.render = __bind(this.render, this);;
-      this.initialize = __bind(this.initialize, this);;      TagBox.__super__.constructor.apply(this, arguments);
-    }
-    __extends(TagBox, Backbone.View);
-    TagBox.prototype.initialize = function() {
-      return this.render();
-    };
-    TagBox.prototype.render = function() {
-      return this.model.getNextPhrase();
-    };
-    return TagBox;
-  })();
   RefinePhrase = (function() {
     function RefinePhrase() {
       this.play = __bind(this.play, this);;
@@ -200,7 +187,7 @@ $(document).ready(function() {
     RefinePhrase.prototype.template = _.template($('#refinetemplate').html());
     RefinePhrase.prototype.events = {
       'click button': 'play',
-      'keyup input': 'save'
+      'change input': 'save'
     };
     RefinePhrase.prototype.initialize = function() {
       this.model.bind('change', this.render);
@@ -211,6 +198,7 @@ $(document).ready(function() {
       return this;
     };
     RefinePhrase.prototype.save = function() {
+      console.log('save');
       return this.model.set({
         start: $('input', this.el).get(0).value,
         end: $('input', this.el).get(1).value
@@ -220,6 +208,45 @@ $(document).ready(function() {
       return this.model.play();
     };
     return RefinePhrase;
+  })();
+  TaggerButton = (function() {
+    function TaggerButton() {
+      this.render = __bind(this.render, this);;
+      this.initialize = __bind(this.initialize, this);;      TaggerButton.__super__.constructor.apply(this, arguments);
+    }
+    __extends(TaggerButton, Backbone.View);
+    TaggerButton.prototype.initialize = function() {
+      this.model.bind('all', this.render);
+      return this.video = this.model.player.v;
+    };
+    TaggerButton.prototype.events = {
+      'click': 'next'
+    };
+    TaggerButton.prototype.next = function() {
+      var currentTime;
+      if (!(this.video.paused || this.video.ended)) {
+        currentTime = this.video.currentTime;
+        console.log(currentTime);
+        console.log(this.model.getLastPhrase());
+        try {
+          this.model.getLastPhrase().set({
+            end: sec2smpte(currentTime, this.model.get('fps'))
+          });
+        } catch (_e) {}
+        this.model.getNextPhrase().set({
+          start: sec2smpte(currentTime, this.model.get('fps'))
+        });
+        return this.render();
+      } else {
+        this.video.currentTime = 0;
+        return this.video.play();
+      }
+    };
+    TaggerButton.prototype.el = $('#taggerbutton');
+    TaggerButton.prototype.render = function() {
+      return this.el.html(this.model.getNextPhrase().get('text'));
+    };
+    return TaggerButton;
   })();
   RefinerView = (function() {
     function RefinerView() {
@@ -240,6 +267,7 @@ $(document).ready(function() {
       return this.el.append(view.render().el);
     };
     RefinerView.prototype.render = function() {
+      this.el.html("");
       return this.model.get('speech').each(this.addOne);
     };
     return RefinerView;
@@ -280,6 +308,9 @@ $(document).ready(function() {
   });
   window.refinerview = new RefinerView({
     el: $('#refine'),
+    model: v
+  });
+  window.taggerbutton = new TaggerButton({
     model: v
   });
   new Workspace();
