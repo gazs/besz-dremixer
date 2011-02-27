@@ -33,16 +33,12 @@ $(document).ready ->
       @length() * 1000
     play: =>
       v = @get('video')
-      console.log "kezdés előtt", tim(v.currentTime), tim(@startTime())
       v.currentTime = @startTime()
       $(v).one 'seeked', =>
-        console.log "kezdés", tim(v.currentTime), tim(@startTime())
         v.play()
         console.time("befejezés valódi idő")
         window.setTimeout () =>
           v.pause()
-          console.log "befejezés", tim(v.currentTime), tim(@startTime()+@length()), @lengthMs()
-          console.timeEnd("befejezés valódi idő")
         , @lengthMs()
 
   class Speech extends Backbone.Collection

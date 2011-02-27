@@ -62,16 +62,12 @@ $(document).ready(function() {
     Phrase.prototype.play = function() {
       var v;
       v = this.get('video');
-      console.log("kezdés előtt", tim(v.currentTime), tim(this.startTime()));
       v.currentTime = this.startTime();
       return $(v).one('seeked', __bind(function() {
-        console.log("kezdés", tim(v.currentTime), tim(this.startTime()));
         v.play();
         console.time("befejezés valódi idő");
         return window.setTimeout(__bind(function() {
-          v.pause();
-          console.log("befejezés", tim(v.currentTime), tim(this.startTime() + this.length()), this.lengthMs());
-          return console.timeEnd("befejezés valódi idő");
+          return v.pause();
         }, this), this.lengthMs());
       }, this));
     };
