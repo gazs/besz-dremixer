@@ -17,35 +17,27 @@ sec2smpte = (time, fps) ->
 
 
 
-class Phrase extends Backbone.Model
-  # start, end, text
-  validate: (attrs)->
-    if attrs.text is ''
-      return 'nem lehet üres'
-  startTime: ->
-    smpte2sec(@get('start'), 25)
-  lengthMs: ->
-    ( smpte2sec(@get('end'), 25) - smpte2sec(@get('start'),25) ) * 1000
-  play: ->
-    vid.currentTime = @startTime()
-    vid.play()
-    window.setTimeout () ->
-      vid.pause()
-    , @lengthMs()
-
-class Speech extends Backbone.Collection
-  model: Phrase
-
-#class Thing extends Backbone.Model
-  #initialize: ->
-    #arr = $('textarea').html().replace(/^\s+/, '').replace(/[\?!\.-;,]/g, ' ').replace(/\s+/g, ' ').toLowerCase().split(' ')
-    #phrases = (new Phrase({text:phrase}) for phrase in arr)
-    #@set
-      #speech: new Speech(phrases)
-
-
 
 $(document).ready ->
+  class Phrase extends Backbone.Model
+    # start, end, text
+    validate: (attrs)=>
+      if attrs.text is ''
+        return 'nem lehet üres'
+    startTime: =>
+      smpte2sec(@get('start'), 25)
+    lengthMs: =>
+      ( smpte2sec(@get('end'), 25) - smpte2sec(@get('start'),25) ) * 1000
+    play: =>
+      v = @get('video')
+      v.currentTime = @startTime()
+      v.play()
+      window.setTimeout () ->
+        v.pause()
+      , @lengthMs()
+
+  class Speech extends Backbone.Collection
+    model: Phrase
   class Vid extends Backbone.Model
     
     # videó
@@ -54,17 +46,17 @@ $(document).ready ->
     #   title
     # text (darabolatlan)
     # speech
-    initialize: ->
-    saveTranscription: (t) ->
+    initialize: =>
+    saveTranscription: (t) =>
       arr = t.replace(/^\s+|\s+$/, '').replace(/[\?!\.-;,]/g, ' ').replace(/\s+/g, ' ').toLowerCase().split(' ')
-      phrases = (new Phrase({text: phrase}) for phrase in arr)
+      phrases = (new Phrase({text: phrase, video: @player.v}) for phrase in arr)
       @set
         speech: new Speech(phrases)
-    getLastPhrase: ->
+    getLastPhrase: =>
       @get('speech').chain().select (phrase)->
         typeof phrase.get('start') is 'string'
       .last().value()
-    getNextPhrase: ->
+    getNextPhrase: =>
       @get('speech').detect (phrase)->
         typeof phrase.get('start') is 'undefined'
 
@@ -76,54 +68,72 @@ $(document).ready ->
       'click #rewind': 'rewind'
       'click #playpause': 'playpause'
       'click #back2s': 'back2s'
-    initialize: ->
+    initialize: =>
+      @model.player = @
       @render()
-    render: ->
+    render: =>
       $(@el).html(@template(@model.toJSON()))
       @v = $('video', @el).get(0)
       @v.addEventListener 'timeupdate', =>
         $('#currenttime').html sec2smpte(@v.currentTime, @model.get("fps")) + '/' + sec2smpte(@v.duration, @model.get("fps"))
       , true
       @
-    rewind: ->
+    rewind: =>
       @v.currentTime=0
-    playpause: ->
+    playpause: =>
       if @v.paused then @v.play() else @v.pause()
-    back2s: ->
+    back2s: =>
       @v.currentTime-=4
       
 
   class TranscriptionBox extends Backbone.View
-    initialize: ->
+    initialize: =>
       @render()
-    events: ->
+    events:
       'click button' : 'saveTranscription'
-    render: ->
+    render: =>
       $('textarea', @el).html  @model.get 'transcription'
-    saveTranscription: ->
+    saveTranscription: =>
       @model.saveTranscription $('textarea', @el).html()
 
   class TagBox extends Backbone.View
-    initialize: ->
+    initialize: =>
       @render()
-    render: ->
+    render: =>
       @model.getNextPhrase()
 
 
-  class window.RefinePhrase extends Backbone.View
+  class RefinePhrase extends Backbone.View
     template: _.template($('#refinetemplate').html())
     events:
       'click button': 'play'
       'keyup input': 'save'
 
-    initialize: ->
-    render: ->
+    initialize: =>
+      @model.bind 'change', @render
+      @render
+    render: =>
       $(@el).html @template @model.toJSON()
-    save: ->
-      console.log 'save'
-    play: ->
-      console.log 'play'
+      @
+    save: =>
+      @model.set
+        start:$('input', @el).get(0).value
+        end:$('input', @el).get(1).value
+    play: =>
+      @model.play()
 
+
+  class RefinerView extends Backbone.View
+    initialize: =>
+      @model.bind 'change:speech', @render
+    addOne: (phrase) =>
+      view = new RefinePhrase
+        model: phrase
+      #console.log view
+      view.render()
+      @el.append view.render().el
+    render: =>
+      @model.get('speech').each @addOne
 
   class Workspace extends Backbone.Controller
     routes:
@@ -147,6 +157,9 @@ $(document).ready ->
     model: v
   window.transcriptionbox = new TranscriptionBox
     el: $('#transcribe')
+    model: v
+  window.refinerview = new RefinerView
+    el: $('#refine')
     model: v
 
   new Workspace()

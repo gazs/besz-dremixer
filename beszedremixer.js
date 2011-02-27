@@ -1,12 +1,12 @@
-var Phrase, Speech, padZero, sec2smpte, smpte2sec;
-var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+var padZero, sec2smpte, smpte2sec;
+var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
   for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
   function ctor() { this.constructor = child; }
   ctor.prototype = parent.prototype;
   child.prototype = new ctor;
   child.__super__ = parent.prototype;
   return child;
-}, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+};
 padZero = function(n) {
   if (n < 10) {
     return '0' + n;
@@ -31,44 +31,52 @@ smpte2sec = function(hh_mm_ss_ff, fps) {
 sec2smpte = function(time, fps) {
   return [padZero(Math.floor(time / 3600) % 24), padZero(Math.floor(time / 60) % 60), padZero(Math.floor(time % 60)), padZero(Math.floor(((time % 1) * fps).toFixed(3)))].join(":");
 };
-Phrase = (function() {
-  function Phrase() {
-    Phrase.__super__.constructor.apply(this, arguments);
-  }
-  __extends(Phrase, Backbone.Model);
-  Phrase.prototype.validate = function(attrs) {
-    if (attrs.text === '') {
-      return 'nem lehet üres';
-    }
-  };
-  Phrase.prototype.startTime = function() {
-    return smpte2sec(this.get('start'), 25);
-  };
-  Phrase.prototype.lengthMs = function() {
-    return (smpte2sec(this.get('end'), 25) - smpte2sec(this.get('start'), 25)) * 1000;
-  };
-  Phrase.prototype.play = function() {
-    vid.currentTime = this.startTime();
-    vid.play();
-    return window.setTimeout(function() {
-      return vid.pause();
-    }, this.lengthMs());
-  };
-  return Phrase;
-})();
-Speech = (function() {
-  function Speech() {
-    Speech.__super__.constructor.apply(this, arguments);
-  }
-  __extends(Speech, Backbone.Collection);
-  Speech.prototype.model = Phrase;
-  return Speech;
-})();
 $(document).ready(function() {
-  var TagBox, TranscriptionBox, Vid, VideoBox, Workspace;
+  var Phrase, RefinePhrase, RefinerView, Speech, TagBox, TranscriptionBox, Vid, VideoBox, Workspace;
+  Phrase = (function() {
+    function Phrase() {
+      this.play = __bind(this.play, this);;
+      this.lengthMs = __bind(this.lengthMs, this);;
+      this.startTime = __bind(this.startTime, this);;
+      this.validate = __bind(this.validate, this);;      Phrase.__super__.constructor.apply(this, arguments);
+    }
+    __extends(Phrase, Backbone.Model);
+    Phrase.prototype.validate = function(attrs) {
+      if (attrs.text === '') {
+        return 'nem lehet üres';
+      }
+    };
+    Phrase.prototype.startTime = function() {
+      return smpte2sec(this.get('start'), 25);
+    };
+    Phrase.prototype.lengthMs = function() {
+      return (smpte2sec(this.get('end'), 25) - smpte2sec(this.get('start'), 25)) * 1000;
+    };
+    Phrase.prototype.play = function() {
+      var v;
+      v = this.get('video');
+      v.currentTime = this.startTime();
+      v.play();
+      return window.setTimeout(function() {
+        return v.pause();
+      }, this.lengthMs());
+    };
+    return Phrase;
+  })();
+  Speech = (function() {
+    function Speech() {
+      Speech.__super__.constructor.apply(this, arguments);
+    }
+    __extends(Speech, Backbone.Collection);
+    Speech.prototype.model = Phrase;
+    return Speech;
+  })();
   Vid = (function() {
     function Vid() {
-      Vid.__super__.constructor.apply(this, arguments);
+      this.getNextPhrase = __bind(this.getNextPhrase, this);;
+      this.getLastPhrase = __bind(this.getLastPhrase, this);;
+      this.saveTranscription = __bind(this.saveTranscription, this);;
+      this.initialize = __bind(this.initialize, this);;      Vid.__super__.constructor.apply(this, arguments);
     }
     __extends(Vid, Backbone.Model);
     Vid.prototype.initialize = function() {};
@@ -81,11 +89,12 @@ $(document).ready(function() {
         for (_i = 0, _len = arr.length; _i < _len; _i++) {
           phrase = arr[_i];
           _results.push(new Phrase({
-            text: phrase
+            text: phrase,
+            video: this.player.v
           }));
         }
         return _results;
-      })();
+      }).call(this);
       return this.set({
         speech: new Speech(phrases)
       });
@@ -104,7 +113,11 @@ $(document).ready(function() {
   })();
   VideoBox = (function() {
     function VideoBox() {
-      VideoBox.__super__.constructor.apply(this, arguments);
+      this.back2s = __bind(this.back2s, this);;
+      this.playpause = __bind(this.playpause, this);;
+      this.rewind = __bind(this.rewind, this);;
+      this.render = __bind(this.render, this);;
+      this.initialize = __bind(this.initialize, this);;      VideoBox.__super__.constructor.apply(this, arguments);
     }
     __extends(VideoBox, Backbone.View);
     VideoBox.prototype.tagName = 'video';
@@ -115,6 +128,7 @@ $(document).ready(function() {
       'click #back2s': 'back2s'
     };
     VideoBox.prototype.initialize = function() {
+      this.model.player = this;
       return this.render();
     };
     VideoBox.prototype.render = function() {
@@ -142,16 +156,16 @@ $(document).ready(function() {
   })();
   TranscriptionBox = (function() {
     function TranscriptionBox() {
-      TranscriptionBox.__super__.constructor.apply(this, arguments);
+      this.saveTranscription = __bind(this.saveTranscription, this);;
+      this.render = __bind(this.render, this);;
+      this.initialize = __bind(this.initialize, this);;      TranscriptionBox.__super__.constructor.apply(this, arguments);
     }
     __extends(TranscriptionBox, Backbone.View);
     TranscriptionBox.prototype.initialize = function() {
       return this.render();
     };
-    TranscriptionBox.prototype.events = function() {
-      return {
-        'click button': 'saveTranscription'
-      };
+    TranscriptionBox.prototype.events = {
+      'click button': 'saveTranscription'
     };
     TranscriptionBox.prototype.render = function() {
       return $('textarea', this.el).html(this.model.get('transcription'));
@@ -163,7 +177,8 @@ $(document).ready(function() {
   })();
   TagBox = (function() {
     function TagBox() {
-      TagBox.__super__.constructor.apply(this, arguments);
+      this.render = __bind(this.render, this);;
+      this.initialize = __bind(this.initialize, this);;      TagBox.__super__.constructor.apply(this, arguments);
     }
     __extends(TagBox, Backbone.View);
     TagBox.prototype.initialize = function() {
@@ -174,9 +189,12 @@ $(document).ready(function() {
     };
     return TagBox;
   })();
-  window.RefinePhrase = (function() {
+  RefinePhrase = (function() {
     function RefinePhrase() {
-      RefinePhrase.__super__.constructor.apply(this, arguments);
+      this.play = __bind(this.play, this);;
+      this.save = __bind(this.save, this);;
+      this.render = __bind(this.render, this);;
+      this.initialize = __bind(this.initialize, this);;      RefinePhrase.__super__.constructor.apply(this, arguments);
     }
     __extends(RefinePhrase, Backbone.View);
     RefinePhrase.prototype.template = _.template($('#refinetemplate').html());
@@ -184,17 +202,47 @@ $(document).ready(function() {
       'click button': 'play',
       'keyup input': 'save'
     };
-    RefinePhrase.prototype.initialize = function() {};
+    RefinePhrase.prototype.initialize = function() {
+      this.model.bind('change', this.render);
+      return this.render;
+    };
     RefinePhrase.prototype.render = function() {
-      return $(this.el).html(this.template(this.model.toJSON()));
+      $(this.el).html(this.template(this.model.toJSON()));
+      return this;
     };
     RefinePhrase.prototype.save = function() {
-      return console.log('save');
+      return this.model.set({
+        start: $('input', this.el).get(0).value,
+        end: $('input', this.el).get(1).value
+      });
     };
     RefinePhrase.prototype.play = function() {
-      return console.log('play');
+      return this.model.play();
     };
     return RefinePhrase;
+  })();
+  RefinerView = (function() {
+    function RefinerView() {
+      this.render = __bind(this.render, this);;
+      this.addOne = __bind(this.addOne, this);;
+      this.initialize = __bind(this.initialize, this);;      RefinerView.__super__.constructor.apply(this, arguments);
+    }
+    __extends(RefinerView, Backbone.View);
+    RefinerView.prototype.initialize = function() {
+      return this.model.bind('change:speech', this.render);
+    };
+    RefinerView.prototype.addOne = function(phrase) {
+      var view;
+      view = new RefinePhrase({
+        model: phrase
+      });
+      view.render();
+      return this.el.append(view.render().el);
+    };
+    RefinerView.prototype.render = function() {
+      return this.model.get('speech').each(this.addOne);
+    };
+    return RefinerView;
   })();
   Workspace = (function() {
     function Workspace() {
@@ -228,6 +276,10 @@ $(document).ready(function() {
   });
   window.transcriptionbox = new TranscriptionBox({
     el: $('#transcribe'),
+    model: v
+  });
+  window.refinerview = new RefinerView({
+    el: $('#refine'),
     model: v
   });
   new Workspace();
