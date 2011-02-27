@@ -1,4 +1,4 @@
-var padZero, sec2smpte, smpte2sec;
+var padZero, sec2smpte, smpte2sec, tim;
 var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
   for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
   function ctor() { this.constructor = child; }
@@ -31,12 +31,16 @@ smpte2sec = function(hh_mm_ss_ff, fps) {
 sec2smpte = function(time, fps) {
   return [padZero(Math.floor(time / 3600) % 24), padZero(Math.floor(time / 60) % 60), padZero(Math.floor(time % 60)), padZero(Math.floor(((time % 1) * fps).toFixed(3)))].join(":");
 };
+tim = function(t) {
+  return sec2smpte(t, 25);
+};
 $(document).ready(function() {
   var Phrase, RefinePhrase, RefinerView, Speech, TaggerButton, TranscriptionBox, Vid, VideoBox, Workspace;
   Phrase = (function() {
     function Phrase() {
       this.play = __bind(this.play, this);;
       this.lengthMs = __bind(this.lengthMs, this);;
+      this.length = __bind(this.length, this);;
       this.startTime = __bind(this.startTime, this);;
       this.validate = __bind(this.validate, this);;      Phrase.__super__.constructor.apply(this, arguments);
     }
@@ -49,17 +53,27 @@ $(document).ready(function() {
     Phrase.prototype.startTime = function() {
       return smpte2sec(this.get('start'), 25);
     };
+    Phrase.prototype.length = function() {
+      return smpte2sec(this.get('end'), 25) - smpte2sec(this.get('start'), 25);
+    };
     Phrase.prototype.lengthMs = function() {
-      return (smpte2sec(this.get('end'), 25) - smpte2sec(this.get('start'), 25)) * 1000;
+      return this.length() * 1000;
     };
     Phrase.prototype.play = function() {
       var v;
       v = this.get('video');
+      console.log("kezdés előtt", tim(v.currentTime), tim(this.startTime()));
       v.currentTime = this.startTime();
-      v.play();
-      return window.setTimeout(function() {
-        return v.pause();
-      }, this.lengthMs());
+      return $(v).one('seeked', __bind(function() {
+        console.log("kezdés", tim(v.currentTime), tim(this.startTime()));
+        v.play();
+        console.time("befejezés valódi idő");
+        return window.setTimeout(__bind(function() {
+          v.pause();
+          console.log("befejezés", tim(v.currentTime), tim(this.startTime() + this.length()), this.lengthMs());
+          return console.timeEnd("befejezés valódi idő");
+        }, this), this.lengthMs());
+      }, this));
     };
     return Phrase;
   })();
@@ -198,7 +212,6 @@ $(document).ready(function() {
       return this;
     };
     RefinePhrase.prototype.save = function() {
-      console.log('save');
       return this.model.set({
         start: $('input', this.el).get(0).value,
         end: $('input', this.el).get(1).value
@@ -226,8 +239,6 @@ $(document).ready(function() {
       var currentTime;
       if (!(this.video.paused || this.video.ended)) {
         currentTime = this.video.currentTime;
-        console.log(currentTime);
-        console.log(this.model.getLastPhrase());
         try {
           this.model.getLastPhrase().set({
             end: sec2smpte(currentTime, this.model.get('fps'))

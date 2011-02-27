@@ -14,7 +14,8 @@ sec2smpte = (time, fps) ->
        padZero(Math.floor(((time%1)*fps).toFixed(3)))
   ].join(":")
 
-
+tim= (t) ->
+  sec2smpte(t,25)
 
 
 
@@ -26,15 +27,23 @@ $(document).ready ->
         return 'nem lehet üres'
     startTime: =>
       smpte2sec(@get('start'), 25)
+    length: =>
+      (smpte2sec(@get('end'), 25) - smpte2sec(@get('start'),25))
     lengthMs: =>
-      ( smpte2sec(@get('end'), 25) - smpte2sec(@get('start'),25) ) * 1000
+      @length() * 1000
     play: =>
       v = @get('video')
+      console.log "kezdés előtt", tim(v.currentTime), tim(@startTime())
       v.currentTime = @startTime()
-      v.play()
-      window.setTimeout () ->
-        v.pause()
-      , @lengthMs()
+      $(v).one 'seeked', =>
+        console.log "kezdés", tim(v.currentTime), tim(@startTime())
+        v.play()
+        console.time("befejezés valódi idő")
+        window.setTimeout () =>
+          v.pause()
+          console.log "befejezés", tim(v.currentTime), tim(@startTime()+@length()), @lengthMs()
+          console.timeEnd("befejezés valódi idő")
+        , @lengthMs()
 
   class Speech extends Backbone.Collection
     model: Phrase
@@ -111,7 +120,6 @@ $(document).ready ->
       $(@el).html @template @model.toJSON()
       @
     save: =>
-      console.log 'save'
       @model.set
         start:$('input', @el).get(0).value
         end:$('input', @el).get(1).value
@@ -127,8 +135,6 @@ $(document).ready ->
     next: ->
       unless @video.paused or @video.ended
         currentTime = @video.currentTime
-        console.log currentTime
-        console.log @model.getLastPhrase()
         try
           @model.getLastPhrase().set
             end: sec2smpte(currentTime, @model.get('fps'))
