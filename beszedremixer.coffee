@@ -175,7 +175,7 @@ $(document).ready ->
         window.location.hash = 'transcribe'
 
   window.v = new Vid
-    url: 'koszonto.mp3'
+    url: 'koszonto.ogv'
     transcription: 'Tisztelt Honfitársaim, magyarok a világ minden pontján!'
     fps: 25
   window.player = new VideoBox

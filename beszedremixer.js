@@ -305,7 +305,7 @@ $(document).ready(function() {
     return Workspace;
   })();
   window.v = new Vid({
-    url: 'koszonto.mp3',
+    url: 'koszonto.ogv',
     transcription: 'Tisztelt Honfitársaim, magyarok a világ minden pontján!',
     fps: 25
   });
