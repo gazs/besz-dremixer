@@ -64,10 +64,14 @@ $(document).ready(function() {
       v = this.get('video');
       v.currentTime = this.startTime();
       return $(v).one('seeked', __bind(function() {
+        console.log("started at: " + v.currentTime + " (" + (sec2smpte(v.currentTime, 25)) + ")");
         v.play();
-        console.time("befejezés valódi idő");
         return window.setTimeout(__bind(function() {
-          return v.pause();
+          var diff, shouldbe;
+          v.pause();
+          shouldbe = this.startTime() + this.lengthMs() / 1000;
+          diff = Math.abs(v.currentTime - shouldbe);
+          return console.log("paused at: " + v.currentTime + " (" + (sec2smpte(v.currentTime, 25)) + "); timeout set:" + (this.lengthMs()) + "; should be at: " + shouldbe + "; diff: " + diff + " (" + (sec2smpte(diff, 25)) + ")");
         }, this), this.lengthMs());
       }, this));
     };
@@ -144,7 +148,7 @@ $(document).ready(function() {
     };
     VideoBox.prototype.render = function() {
       $(this.el).html(this.template(this.model.toJSON()));
-      this.v = $('video', this.el).get(0);
+      this.v = $(this.tagName, this.el).get(0);
       this.v.addEventListener('timeupdate', __bind(function() {
         return $('#currenttime').html(sec2smpte(this.v.currentTime, this.model.get("fps")) + '/' + sec2smpte(this.v.duration, this.model.get("fps")));
       }, this), true);
@@ -301,7 +305,7 @@ $(document).ready(function() {
     return Workspace;
   })();
   window.v = new Vid({
-    url: 'koszonto.mp4',
+    url: 'koszonto.mp3',
     transcription: 'Tisztelt Honfitársaim, magyarok a világ minden pontján!',
     fps: 25
   });

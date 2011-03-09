@@ -35,14 +35,18 @@ $(document).ready ->
       v = @get('video')
       v.currentTime = @startTime()
       $(v).one 'seeked', =>
+        console.log "started at: #{v.currentTime} (#{sec2smpte(v.currentTime,25)})"
         v.play()
-        console.time("befejezés valódi idő")
         window.setTimeout () =>
           v.pause()
+          shouldbe = @startTime() + @lengthMs()/1000
+          diff = Math.abs(v.currentTime-shouldbe)
+          console.log "paused at: #{v.currentTime} (#{sec2smpte(v.currentTime, 25)}); timeout set:#{@lengthMs()}; should be at: #{shouldbe}; diff: #{diff} (#{sec2smpte(diff, 25)})"
         , @lengthMs()
 
   class Speech extends Backbone.Collection
     model: Phrase
+
   class Vid extends Backbone.Model
     
     # videó
@@ -78,7 +82,7 @@ $(document).ready ->
       @render()
     render: =>
       $(@el).html(@template(@model.toJSON()))
-      @v = $('video', @el).get(0)
+      @v = $(@tagName, @el).get(0)
       @v.addEventListener 'timeupdate', =>
         $('#currenttime').html sec2smpte(@v.currentTime, @model.get("fps")) + '/' + sec2smpte(@v.duration, @model.get("fps"))
       , true
@@ -171,7 +175,7 @@ $(document).ready ->
         window.location.hash = 'transcribe'
 
   window.v = new Vid
-    url: 'koszonto.mp4'
+    url: 'koszonto.mp3'
     transcription: 'Tisztelt Honfitársaim, magyarok a világ minden pontján!'
     fps: 25
   window.player = new VideoBox
